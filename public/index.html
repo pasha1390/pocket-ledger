@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pocket Ledger</title>
+<meta name="description" content="Track daily expenses and income, see where your money goes.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div class="bar">
+  <button id="burger" class="burger" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
+  <h1><span class="coin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5L12 4l9 5.5M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18M3 17.5h18"/></svg></span> Pocket Ledger</h1>
+ </div>
+ <div class="bar">
+  <input type="month" id="month" aria-label="Month"><select id="day" aria-label="Day"><option value="">All days</option></select><button id="todaybtn" class="sm" title="Jump to today">Today</button>
+  <div class="seg" id="cur"><button data-c="USD">USD $</button><button data-c="TMN">TMN</button></div>
+  <button id="theme" class="sm" aria-label="Toggle theme">◐</button>
+ </div>
+</header>
+<div class="scope" id="scope" aria-live="polite"></div>
+
+<main>
+<!-- DASHBOARD -->
+<section class="view" id="v-dashboard">
+ <div class="sum">
+  <div class="card bankcard" id="bcard">
+   <div class="bc-top"><span class="bc-brand">POCKET LEDGER</span><span class="bc-chip" aria-hidden="true"></span></div>
+   <span class="bc-label">Available balance</span>
+   <b id="sBal"></b>
+   <div class="bc-bot"><span id="bcNum">•••• •••• •••• 0000</span><span id="bcName">GUEST</span></div>
+  </div>
+  <div class="card"><span id="lblInc">Income</span><b class="inc" id="sInc"></b></div>
+  <div class="card"><span id="lblExp">Spent</span><b class="exp" id="sExp"></b></div>
+ </div>
+ <div class="grid">
+  <div class="card">
+   <h2>Add transaction</h2>
+   <form id="f">
+    <div class="seg full" id="type"><button type="button" data-t="expense" class="on">Expense</button><button type="button" data-t="income">Income</button></div>
+    <input class="full" id="title" placeholder="Title (e.g. Lunch with Sara)" required>
+    <input id="amount" type="text" data-money inputmode="decimal" autocomplete="off" placeholder="Amount" required>
+    <select id="ccy"><option>USD</option><option>TMN</option></select>
+    <input id="tag" list="tags" placeholder="Tag (Food, Rent…)" required>
+    <datalist id="tags"></datalist>
+    <input id="date" type="date" required>
+    <div class="qt full" id="qtags" aria-label="Quick tags"></div>
+    <button class="p full">Add</button>
+   </form>
+  </div>
+  <div class="card">
+   <h2>Spending by tag</h2>
+   <div class="chart"><svg id="pie" width="170" height="170" viewBox="0 0 170 170" role="img" aria-label="Spending by tag"></svg><div class="leg" id="leg"></div></div>
+   <div style="margin-top:14px"><div class="bar between"><span class="muted">Monthly budget</span><a href="#/budgets" class="lnk">Edit</a></div><div class="prog"><i id="pb" style="width:0"></i></div><small id="bt" class="muted"></small></div>
+  </div>
+ </div>
+ <div class="card sect"><div class="bar between"><h2>Spending calendar</h2><span class="muted">Tap a day to open it</span></div><div class="cal" id="cal"></div><div class="muted cal-key"><i class="dot" style="background:var(--acc)"></i> spending · <i class="dot" style="background:var(--inc)"></i> income</div></div>
+ <div class="card sect"><h2>Insights</h2><div class="ins" id="ins"></div></div>
+ <div class="card sect"><div class="bar between"><h2>Recent</h2><a href="#/transactions" class="lnk">See all →</a></div><div class="list" id="recent"></div></div>
+</section>
+
+<!-- TRANSACTIONS -->
+<section class="view" id="v-transactions" hidden>
+ <h2 class="vh">Transactions</h2>
+ <div class="card">
+  <div class="filters">
+   <input id="q" type="search" placeholder="Search title or tag" aria-label="Search">
+   <select id="ftag" aria-label="Tag"><option value="">All tags</option></select>
+   <select id="ftype" aria-label="Type"><option value="">Income &amp; expenses</option><option value="expense">Expenses</option><option value="income">Income</option></select>
+   <select id="fsort" aria-label="Sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="largest">Largest first</option><option value="smallest">Smallest first</option></select>
+   <label class="chk"><input type="checkbox" id="fall"> All months</label>
+  </div>
+  <div id="tcount" class="muted"></div>
+  <div class="list tall" id="list"></div>
+ </div>
+</section>
+
+<!-- REPORTS -->
+<section class="view" id="v-reports" hidden>
+ <div class="bar between"><h2 class="vh">Reports</h2><button id="printbtn" class="sm">Print report</button></div>
+ <div class="stats" id="rstats"></div>
+ <div class="card sect"><h2 id="trendTitle">Last 6 months</h2><div class="legend"><span><i class="dot" style="background:var(--inc)"></i>Income</span><span><i class="dot" style="background:var(--exp)"></i>Spent</span></div><div id="trend"></div></div>
+ <div class="card sect"><h2>Top categories</h2><div id="tops"></div></div>
+</section>
+
+<!-- BUDGETS -->
+<section class="view" id="v-budgets" hidden>
+ <h2 class="vh">Budgets</h2>
+ <p class="muted" id="bnote" hidden>Budgets are tracked per month, so this page always shows the whole month.</p>
+ <div class="card">
+  <h2>Monthly budget</h2>
+  <form id="bf" class="inline"><input id="bud" type="text" data-money inputmode="decimal" placeholder="Total limit per month" required><select id="budc"><option>USD</option><option>TMN</option></select><button class="p">Save</button><button type="button" id="budclear" hidden>Remove</button></form>
+  <div class="prog"><i id="pb2" style="width:0"></i></div><small id="bt2" class="muted"></small>
+ </div>
+ <div class="card sect">
+  <h2>Budget per tag</h2>
+  <form id="tbf" class="inline"><input id="tbtag" list="tags" placeholder="Tag (e.g. Food)" required><input id="tbamt" type="text" data-money inputmode="decimal" placeholder="Limit" required><select id="tbc"><option>USD</option><option>TMN</option></select><button class="p">Add</button></form>
+  <div id="tblist"></div>
+ </div>
+</section>
+
+<!-- RECURRING -->
+<section class="view" id="v-recurring" hidden>
+ <h2 class="vh">Recurring</h2>
+ <div class="card">
+  <h2>Add a recurring item</h2>
+  <p class="muted">Rent, salary, subscriptions: add them once and they are created for you every month.</p>
+  <form id="rf">
+   <select id="rk"><option value="expense">Expense</option><option value="income">Income</option></select>
+   <input id="rt" placeholder="Title (e.g. Rent)" required>
+   <input id="ra" type="text" data-money inputmode="decimal" placeholder="Amount" required>
+   <select id="rcur"><option>USD</option><option>TMN</option></select>
+   <input id="rg" list="tags" placeholder="Tag (Rent, Bills…)">
+   <input id="rd" type="number" min="1" max="31" placeholder="Day of month (1-31)" required>
+   <button class="p full">Add</button>
+  </form>
+ </div>
+ <div class="card sect"><h2>Your recurring items</h2><div class="list" id="rlist"></div></div>
+</section>
+
+<!-- GOALS -->
+<section class="view" id="v-goals" hidden>
+ <h2 class="vh">Savings goals</h2>
+ <div class="card">
+  <h2>New goal</h2>
+  <form id="gf" class="inline"><input id="gname" placeholder="Goal (e.g. New laptop)" required><input id="gtarget" type="text" data-money inputmode="decimal" placeholder="Target amount" required><select id="gc"><option>USD</option><option>TMN</option></select><button class="p">Create</button></form>
+ </div>
+ <div class="goals sect" id="glist"></div>
+</section>
+
+<!-- IMPORT & EXPORT -->
+<section class="view" id="v-data" hidden>
+ <h2 class="vh">Import &amp; Export</h2>
+ <div class="grid">
+  <div class="card">
+   <h2>Export</h2>
+   <div class="row">
+    <label>Format<select id="xfmt"><option value="csv">CSV (spreadsheet)</option><option value="json">JSON (full backup)</option></select></label>
+    <label>Range<select id="xrange"><option value="all">All time</option><option value="month">Selected month</option><option value="custom">Custom dates</option></select></label>
+   </div>
+   <div class="row" id="xdates" hidden><label>From<input type="date" id="xfrom"></label><label>To<input type="date" id="xto"></label></div>
+   <div class="pv-head"><b>Preview</b><span id="xsum" class="muted"></span></div>
+   <div class="prev" id="xpv"></div>
+   <div class="bar" style="margin-top:12px"><button id="xdl" class="p">Export…</button><button id="xcopy">Copy to clipboard</button></div>
+  </div>
+  <div class="card">
+   <h2>Import</h2>
+   <label class="drop" id="drop" tabindex="0"><input type="file" id="ifile" accept=".csv,.json,text/csv,application/json" hidden><b>Drop a CSV or JSON file here</b><span>or click to choose a file</span></label>
+   <div style="margin-top:8px"><a href="#" id="tpl" class="lnk">Download a CSV template</a></div>
+   <div id="ipv" hidden>
+    <div class="pv-head"><b id="ifname"></b><button id="icancel" class="sm">Choose another file</button></div>
+    <div class="chips" id="ichips"></div>
+    <div class="row"><label class="chk"><input type="checkbox" id="iskip" checked> Skip duplicates</label><label>Rows with no currency are<select id="idef"><option>USD</option><option>TMN</option></select></label></div>
+    <label class="chk" id="ixtra" hidden><input type="checkbox" id="irestore"> Also restore budgets, recurring items and goals from this backup</label>
+    <div class="pv-head"><b>Preview</b><span class="muted">first 12 rows</span></div>
+    <div class="prev" id="itable"></div>
+    <button id="igo" class="p" style="margin-top:12px">Import</button>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- SETTINGS -->
+<section class="view" id="v-settings" hidden>
+ <h2 class="vh">Settings</h2>
+ <div class="grid">
+  <div class="card">
+   <h2>Currency</h2>
+   <label class="chk">1 USD =&nbsp;<input id="rate" type="text" data-money inputmode="decimal" style="width:130px">&nbsp;TMN</label>
+   <p class="muted">Switch the display currency with the USD / TMN buttons at the top. Set the exchange rate yourself, because it changes often.</p>
+  </div>
+  <div class="card">
+   <h2>Appearance</h2>
+   <div class="row"><label>Theme<select id="theme2"><option value="">Match my device</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+   <label>Numbers<select id="nums"><option value="en">1,234.56</option><option value="fa">۱٬۲۳۴٫۵۶ (Persian)</option></select></label></div>
+  </div>
+  <div class="card"><h2>Account</h2><div id="acctbox"></div></div>
+  <div class="card"><h2>Data</h2><div class="bar"><button id="demo">Add sample data</button><button id="reset" class="danger">Delete all data…</button></div><p class="muted">Deleting removes every transaction, budget, recurring item and goal.</p></div>
+ </div>
+</section>
+</main>
+</div>
+
+<!-- MENU (the three lines) -->
+<div id="scrim" class="scrim" hidden></div>
+<nav id="drawer" class="drawer" aria-label="Main menu" aria-hidden="true">
+ <div class="dhead"><span class="coin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5L12 4l9 5.5M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18M3 17.5h18"/></svg></span><b>Pocket Ledger</b><button id="dclose" class="sm" aria-label="Close menu">✕</button></div>
+ <div class="dsec">Overview</div>
+ <a href="#/dashboard" data-v="dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Dashboard</a><a href="#/transactions" data-v="transactions"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Transactions</a><a href="#/reports" data-v="reports"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>Reports</a>
+ <div class="dsec">Plan</div>
+ <a href="#/budgets" data-v="budgets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.2 15.9A10 10 0 1 1 8 2.8M22 12A10 10 0 0 0 12 2v10z"/></svg>Budgets</a><a href="#/recurring" data-v="recurring"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>Recurring</a><a href="#/goals" data-v="goals"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Goals</a>
+ <div class="dsec">Data</div>
+ <a href="#/data" data-v="data"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Import &amp; Export</a>
+ <div class="dsec">Account</div>
+ <a href="#/settings" data-v="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Settings</a>
+ <div class="dfoot"><div id="dwho" class="muted">Guest · saved in this browser</div><button id="dsign" class="p">Sign in or create account</button><button id="dout" hidden>Log out</button></div>
+</nav>
+
+<div id="am" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="at"><div class="card box">
+ <h2 id="at">Welcome</h2>
+ <div class="seg" id="atabs"><button type="button" data-tab="in" class="on">Sign in</button><button type="button" data-tab="up">Create account</button></div>
+ <div id="gwrap"><div id="gbtn" class="gslot"></div><div class="or">or use email</div></div>
+ <form id="af" class="stack">
+  <input id="ae" type="email" placeholder="Email" autocomplete="email" required>
+  <input id="ap" type="password" minlength="8" placeholder="Password" autocomplete="current-password" required>
+  <button class="p">Sign in</button>
+ </form>
+ <form id="cf" class="stack" hidden>
+  <div class="two"><input id="cfn" placeholder="First name" autocomplete="given-name" maxlength="50" required><input id="cln" placeholder="Last name" autocomplete="family-name" maxlength="50" required></div>
+  <input id="ce" type="email" placeholder="Email" autocomplete="email" required>
+  <input id="cp" type="password" minlength="8" placeholder="Password (8+ characters)" autocomplete="new-password" required>
+  <button class="p">Create account</button>
+  <small class="muted">We will email you a 6-digit code to verify your address.</small>
+ </form>
+ <form id="vf" class="stack" hidden>
+  <p id="vtext" class="muted"></p>
+  <input id="vcode" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="000000" aria-label="6-digit code" required>
+  <button class="p">Verify</button>
+  <div class="two"><button type="button" id="vresend">Resend code</button><button type="button" id="vback">Back</button></div>
+ </form>
+ <small id="amsg" class="amsg" aria-live="polite"></small>
+ <button type="button" id="aclose" class="linkbtn">Continue as guest</button>
+</div></div>
+<div id="rc" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="rct"><div class="card box"><h2 id="rct">Delete everything?</h2><p>All transactions and your budget will be removed. This cannot be undone.</p><div class="bar" style="justify-content:flex-end"><button id="rno">Cancel</button><button id="ryes" style="background:var(--exp);color:#fff;border-color:var(--exp);font-weight:700">Yes, delete everything</button></div></div></div>
+<div id="xm" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="xt"><div class="card box">
+ <h2 id="xt">How would you like your file?</h2>
+ <p class="muted" id="xinfo"></p>
+ <div class="choices">
+  <button type="button" id="xchd" class="choice"><b>Download</b><span>Save the file on this device</span></button>
+  <button type="button" id="xche" class="choice"><b>Email it to me</b><span id="xemailto">Sign in to use this</span></button>
+ </div>
+ <button type="button" id="xcancel" style="margin-top:10px;width:100%">Cancel</button>
+</div></div>
+<div id="em" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="et"><div class="card box"><h2 id="et">Edit transaction</h2>
+ <form id="ef"><input class="full" id="etitle" placeholder="Title"><input id="eamt" type="text" data-money inputmode="decimal" placeholder="Amount" required><select id="eccy"><option>USD</option><option>TMN</option></select><input id="etag" list="tags" placeholder="Tag"><input id="edate" type="date" required><button class="p full">Save changes</button><button type="button" id="ecancel" class="full">Cancel</button></form></div></div>
+<div class="toast" id="toast" hidden></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="/js/core.js"></script>
+<script src="/js/dash.js"></script>
+<script src="/js/plan.js"></script>
+<script src="/js/data.js"></script>
+<script src="/js/account.js"></script>
+<script src="/js/main.js"></script>
+</body>
+</html>

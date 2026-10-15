@@ -1,0 +1,27 @@
+{
+  "name": "pocket-ledger",
+  "version": "1.0.0",
+  "description": "Expense & income tracker with accounts (email/password + Google), Express + SQLite backend.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "google-auth-library": "^9.14.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.15"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.3.0"
+  }
+}

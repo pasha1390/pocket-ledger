@@ -1,0 +1,5 @@
+date,type,title,tag,amount,currency
+2026-10-01,income,Income,Income,1500,USD
+2026-10-02,expense,Groceries,Food,42.50,USD
+2026-10-03,expense,Taxi,Transport,350000,TMN
+2026-10-05,expense,"Coffee, big one",Food,4.20,USD
